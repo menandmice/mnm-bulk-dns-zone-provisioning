@@ -21,7 +21,7 @@ The input file can have two different formats:
 
 Format one for deletions. Each line is a new entry. The first column
 is the zonefile, the second column is the DNS domainname (ownername)
-to be removed. All records that are owned by the domainname are removed:
+to be removed. The first record that is owned by the domainname are removed:
 
 84.151.10.in-addr.arpa. 244
 84.151.10.in-addr.arpa. 242
