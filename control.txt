@@ -1,0 +1,10 @@
+84.151.10.in-addr.arpa. 244 PTR www.example.com.
+84.151.10.in-addr.arpa. 242 PTR mail.example.net.
+84.151.10.in-addr.arpa. 130 PTR ldap.example.org.
+example.org.  mail
+wrong formatted entry
+example.com.  www  A 192.0.2.80
+example.com.  @    NS  ns3.example.com.
+example.com   test TXT "Hello"
+example.net.  @	   MX  10 mail.example.com.
+

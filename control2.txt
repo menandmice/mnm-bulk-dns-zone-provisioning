@@ -1,0 +1,10 @@
+84.151.10.in-addr.arpa. 244
+84.151.10.in-addr.arpa. 242 PTR
+84.151.10.in-addr.arpa. 130
+example.org.  mail
+wrong formatted entry
+example.com.  www 
+example.com.  @   
+example.com   test
+example.net.  @	  
+

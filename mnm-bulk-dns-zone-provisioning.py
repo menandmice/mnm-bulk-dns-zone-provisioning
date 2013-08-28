@@ -41,7 +41,7 @@ separated by whitespace).
 84.151.10.in-addr.arpa. 130 PTR ldap.example.org.
 example.com.  www  A 192.0.2.80
 example.com.  @    NS  ns1.example.com.
-example.net.  @    SOA ns1.example.com. hostmaster 100 1d 2h 41d 1h
+example.net.  @    mx 10 mail.example.com.
 
 The column fields are separated by whitespace.
 
@@ -98,9 +98,81 @@ if __name__ == "__main__":
         linenum = linenum + 1
         l = l.rstrip("\n")
         fields = l.split(maxsplit=4)
-
+        if len(fields) < 2:
+            continue
+        # ------------------------------------
+        # remove records
+        # ------------------------------------
         if options.removeflag:
-           pass 
+            zone = ""
+            owner = ""
+            rtype = ""
+            rdata = ""
+            if (len(fields) == 2):
+                zone, owner  = fields[0], fields[1]
+            else:
+                if (len(fields) > 3):
+                    zone, owner, rtype, rdata  = fields[0], fields[1],fields[2], " ".join(fields[3:])
+                else:
+                    continue
+            # make zone fully qualified        
+            if not zone.endswith("."):
+                zone = zone + "."
+                # create the fqdn (Full Qualified Domain Name) ownername
+            if not owner.endswith("@"):
+                if owner.endswith("."):
+                    fqdn = owner + zone
+                else:
+                    fqdn = owner + "." + zone
+            else:
+                fqdn = zone
+
+            if options.debugflag:
+                print(rr)
+            zones = mmcmd("zones", options.debugflag)
+            zones = zones.splitlines()
+            zonelist = [z.split(" ",1)[0] for z in zones]
+            # cannot remove records from non-existing zone
+            if zone in zonelist:
+                print("Searching in zone [{}] ...".format(zone))
+                records = mmcmd("print -l {}".format(zone))
+                records = records.splitlines()
+                records = [r.split("\t",4) for r in records]
+
+                for r in records:
+                    zowner, zttl, znetclass, zrtype, zrdata = r[0], r[1], r[2], r[3], r[4]
+                    zrdata = " ".join(zrdata.split())
+                    idx, zowner = zowner.split(":")
+                    idx = idx.strip()
+                    zowner = zowner.strip()
+                    if zowner.endswith("@"):
+                        zowner = zone
+                    if owner.endswith("@"):
+                        owner = zone
+                    rr = " ".join([zowner, zrtype, zrdata])
+                    # test if record should be removed
+                    remove = False
+                    if zowner == owner:
+                        remove = True
+                    if not rtype == "":
+                        if not zrtype == rtype:
+                            remove = False
+                    if not rdata == "":
+                        if not zrdata == rdata:
+                            remove = False
+                    if remove:
+                        print("Removing [{}] ...".format(rr))
+                        rc = mmcmd("del {} {}; save {}".format(zone,
+                                                               idx, zone))
+                        if (len(rc)>0):
+                            print("Error from mmcmd: {}".format(rc))                        
+            else:
+                print("Cannot remove records from non-existing zone [{}]".format(zone))
+
+
+        # ------------------------------------
+        # add records
+        # ------------------------------------
         else:
             if (len(fields) < 4):
                 print("Not enough fields for record addition, ignoring line" +
@@ -117,10 +189,11 @@ if __name__ == "__main__":
                     else:
                         fqdn = owner + "." + zone
                 else:
-                    fqdn = owner
+                    fqdn = zone
                             
                 rr = " ".join([fqdn, rtype, rdata])
-                print(rr)
+                if options.debugflag:
+                    print(rr)
                 zones = mmcmd("zones", options.debugflag)
                 zones = zones.splitlines()
                 zonelist = [z.split(" ",1)[0] for z in zones]
